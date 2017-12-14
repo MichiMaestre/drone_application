@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "ros/console.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Header.h"
 #include "nav_msgs/Path.h"
@@ -23,14 +24,14 @@ double yaw = 0.0;
 double throttle = 0.0;
 double takeoff = 0.0;
 double land = 0.0;
-
+double autonomous_switch = 0.0;
 
 /*
  * PD controller tuning constants
  */
 double kp1 = 0.8;
 double kp2 = 0.8;
-double kp3 = 0.8;
+double kp3 = 0.3;
 double kp_yaw = 0.02;
 
 double kd1 = 0.5;
@@ -61,8 +62,8 @@ double ades_yaw = 0;
 /*
  * Navigation target, not used as errors are reported at the moment
  */
- double x_target = 0.0;
- double y_target = 1.0;
+ double x_target = 2.5;
+ double y_target = 0.0;
  double z_target = 0.0;
  
  double seconds = 0;
@@ -82,20 +83,21 @@ void subCallback(const sensor_msgs::Joy& msg)
 	throttle = msg.axes[1];
 	takeoff = msg.buttons[0];
 	land = msg.buttons[1];
+	autonomous_switch = msg.buttons[2];
 
 
-	ROS_INFO("x: %f y: %f z: %f t: %f takeoff: %f land: %f", pitch, roll,yaw,throttle, takeoff, land);
+
+	//ROS_INFO("x: %f y: %f z: %f t: %f takeoff: %f land: %f", pitch, roll,yaw,throttle, takeoff, land);
 
 
 }
 
 void subCallback2(const geometry_msgs::Twist& msg)
 {
-	ep1 = msg.linear.x;
+	ep1 = msg.linear.x - x_target;
 	ep2 = msg.linear.y;
 	ep3 = msg.linear.z;
-	eyaw = msg.angular.z;
-	
+	eyaw = msg.angular.y;
 	
 }
 
@@ -104,11 +106,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "ar_outerloop");
 	ros::NodeHandle n;
 
-	startSeconds = (double)ros::Time::now().toSec();
+	seconds_prev = (double)ros::Time::now().toSec();
 
 	
 	ros::Subscriber sub = n.subscribe("joy", 1000, subCallback);
-	ros::Subscriber sub2 = n.subscribe("error", 1000, subCallback);
+	ros::Subscriber sub2 = n.subscribe("error", 1000, subCallback2);
 	ros::Publisher read_pub = n.advertise<std_msgs::Empty>("ardrone/takeoff", 1000);
 	ros::Publisher read_pub2 = n.advertise<std_msgs::Empty>("ardrone/land", 1000);
 	ros::Publisher read_pub3 = n.advertise<geometry_msgs::Twist>("cmd_vel", 30);
@@ -132,7 +134,12 @@ int main(int argc, char **argv)
         if(land> 0.5){
         	read_pub2.publish(myMsg);
         }
-		
+		if(autonomous_switch>0.5){
+			autonomous = true;
+		}else{
+			autonomous = false;
+		}
+		ROS_INFO("autonomous_switch %f", autonomous_switch);
 		
 		
 		if(dt!=0) {
@@ -156,9 +163,12 @@ int main(int argc, char **argv)
 
 
         }
+
+
 		
 		if(!autonomous){ 
 			//send xbox commands
+			//ROS_INFO_STREAM("NOPE");
 			cmdMsg.linear.x = pitch;
 			cmdMsg.linear.y = roll;
 			cmdMsg.linear.z = throttle;
@@ -166,10 +176,17 @@ int main(int argc, char **argv)
 			read_pub3.publish(cmdMsg);
 		}else{
 			cmdMsg.linear.x = ades1;
-			cmdMsg.linear.x = ades2;
-			cmdMsg.linear.x = ades3;
+			cmdMsg.linear.y = -ades2;
+			cmdMsg.linear.z = ades3;
 			cmdMsg.angular.z = ades_yaw;
-			read_pub3.publish(cmdMsg);
+			//read_pub3.publish(cmdMsg);
+			//ROS_INFO("pitch: %f roll: %f throttle: %f yaw: %f",ades1,-ades2,ades3,ades_yaw);
+
+			// cmdMsg.linear.x = -ades3;
+			// cmdMsg.linear.y = -ades1;
+			// cmdMsg.linear.z = ades2;
+			// cmdMsg.angular.z = -ades_yaw;
+			//read_pub3.publish(cmdMsg);
 		}
 		
         loop_rate.sleep();
@@ -179,4 +196,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
