@@ -1,7 +1,10 @@
 #include <ros/ros.h>
+#include "ros/console.h"
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include "geometry_msgs/Twist.h"
+#include "std_msgs/Bool.h"
+#include <iostream>
 
 int main(int argc, char** argv){
   ros::init(argc, argv, "frame");
@@ -14,6 +17,8 @@ int main(int argc, char** argv){
   tf::Transform previous_transform;
 
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("error", 1000);
+  ros::Publisher pub1 = n.advertise<std_msgs::Bool>("detect_flag", 1);
+  std_msgs::Bool mymsg;
 
   int detection = 0;
   double x1 = 0; double x2 = 0; double x3 = 0; double x4 = 0;
@@ -70,10 +75,6 @@ int main(int argc, char** argv){
       ros::Duration(1.0).sleep();
     }
 
-
-
-        // std::cout << "X2: " << x2 << std::endl;
-
         // Third tag
     tf::StampedTransform transform3;
 
@@ -126,6 +127,8 @@ int main(int argc, char** argv){
 
 
     if(detection == 4){
+      mymsg.data = true;
+      pub1.publish(mymsg);
     //std::cout << "Window Center" << std::endl; 
 
     double X = (x1 + x2 + x3 + x4) / 4;
@@ -144,6 +147,7 @@ int main(int argc, char** argv){
     //std::cout << "Pitch: " << pitch << std::endl;
 
     double yaw = (yaw1 + yaw2 + yaw3 + yaw4) / 4;
+    
     //std::cout << "Yaw: " << yaw << std::endl;
 
     //std::cout << "  " << std::endl; 
@@ -174,6 +178,7 @@ int main(int argc, char** argv){
     tf::Quaternion q_final = transform_center.getRotation();
     tf::Matrix3x3 m_final(q_final);
     m_final.getRPY(rollf, pitchf, yawf);
+    yawf = (yawf/(3.14159265))*180.0;
 
     // Publish error between window frame and base link
     error.linear.x = transform_center.getOrigin().x();

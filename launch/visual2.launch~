@@ -1,25 +1,23 @@
-<?xml version="1.0"?>
-
 <launch>
- <arg name="droneip" default="192.168.1.1" />
- <node name="ardrone_driver" pkg="ardrone_autonomy" type="ardrone_driver" output="log" args="-ip $(arg droneip)">
-   <param name="navdata_demo" value="False" />
-   <param name="realtime_navdata" value="True" />
-   <param name="realtime_video" value="True" />
-   <param name="looprate" value="30" />
- </node>
-  <node name="joy" pkg="joy" type="joy_node" output="log">
-  	<param name="deadzone" value="0.05" />
- </node>
-
- <node name="ar_outerloop" pkg="drone_application" type="drone_application" output="screen">
- </node> 
-
- <node pkg="rviz" type="rviz" name="rviz"/>
+<node pkg="rviz" type="rviz" name="rviz"/>
   <node pkg="tf" type="static_transform_publisher" name="world_to_cam" 
      />
 
-  <arg name="marker_size" default="12.6" />
+
+<!-- <node pkg="ar_pose" type="ar_single" name="ar_pose" output="screen" >
+
+	<remap from="/camera/image_raw" to ="/ardrone/front/image_raw" />
+ 	<remap from="/camera/camera_info" to ="/ardrone/front/camera_info" />
+  <param name="marker_pattern" type="string"
+      value="$(find ar_pose)/data/4x4/4x4_0.patt"/>
+	<param name="marker_width" type="double" value = "107.0" />
+ 	<param name="marker_frame" type="string" value = "left_ar_marker"/>
+	<param name="threshold" type="double" value = "100" />
+ 	<param name="use_history" type="bool" value = "true" />
+ 
+ </node> -->
+
+  <arg name="marker_size" default="10.2" />
   <arg name="max_new_marker_error" default="0.08" />
   <arg name="max_track_error" default="0.2" />
   <arg name="cam_image_topic" default="/ardrone/front/image_raw" />
@@ -35,10 +33,5 @@
     <remap from="camera_image"  to="$(arg cam_image_topic)" />
     <remap from="camera_info"   to="$(arg cam_info_topic)" />
   </node>
-
-  <node name="listener" pkg="drone_application" type="drone_application" output="screen" respawn="true"/>
-<!-- <node name="drone_application1" pkg="drone_application" type="drone_application1" output="screen"> 
-</node> -->
- 
 
 </launch>
