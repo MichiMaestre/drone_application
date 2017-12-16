@@ -34,7 +34,7 @@ int main(int argc, char** argv){
   double rollf = 0; double pitchf = 0; double yawf = 0;
 
 
-  ros::Rate rate(10.0);
+  ros::Rate rate(60.0);
   while (n.ok()) {
     geometry_msgs::Twist error;
 
@@ -210,9 +210,13 @@ int main(int argc, char** argv){
     error.linear.x = transform_center.getOrigin().x();
     error.linear.y = transform_center.getOrigin().y();
     error.linear.z = transform_center.getOrigin().z();
+    yawf = atan2(transform_center.getOrigin().x(), transform_center.getOrigin().y());
     error.angular.x = rollf;
     error.angular.y = pitchf;
+    yawf = (yawf/(3.14159265))*180.0 - 90.0;
+    //ROS_INFO("yaw: %f", yawf);
     error.angular.z = yawf;
+
     //ROS_INFO("roll: %f pitch: %f yaw: %f", rollf, pitchf, yawf);
     pub.publish(error);
 

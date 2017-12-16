@@ -7,6 +7,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64MultiArray.h"
+#include "std_msgs/Float64.h"
 #include "std_msgs/Empty.h"
 #include "sensor_msgs/Joy.h"
 #include <iostream>
@@ -30,13 +31,13 @@ double autonomous_switch = 0.0;
  * PD controller tuning constants
  */
 double kp1 = 0.8;
-double kp2 = 0.8;
+double kp2 = 0.08;
 double kp3 = 0.3;
-double kp_yaw = 0.3;
+double kp_yaw = 0.03;
 
 double kd1 = 0.5;
-double kd2 = 0.5;
-double kd3 = 0.5;
+double kd2 = 0.05;
+double kd3 = 0.05;
 double kd_yaw = 0.01;
 
 double ep1 = 0;
@@ -62,17 +63,17 @@ double ades_yaw = 0;
 /*
  * Navigation target, not used as errors are reported at the moment
  */
- double x_target = 2.5;
- double y_target = 0.0;
- double z_target = 0.0;
- 
- double seconds = 0;
- double seconds_prev = 0;
- double dt = 0;
- 
- bool autonomous = false;
- 
- 
+double x_target = 2.5;
+double y_target = 0.0;
+double z_target = 0.0;
+
+double seconds = 0;
+double seconds_prev = 0;
+double dt = 0;
+
+bool autonomous = false;
+
+
 
 void subCallback(const sensor_msgs::Joy& msg)
 {
@@ -95,10 +96,15 @@ void subCallback(const sensor_msgs::Joy& msg)
 void subCallback2(const geometry_msgs::Twist& msg)
 {
 	ep1 = msg.linear.x - x_target;
-	ep2 = msg.linear.y;
+	//ep2 = msg.linear.y;
 	ep3 = msg.linear.z;
-	eyaw = msg.angular.y;
+	eyaw = msg.angular.z;
 	
+}
+
+void subCallback3(const std_msgs::Float64& msg)
+{
+	ep2 = msg.data;
 }
 
 int main(int argc, char **argv)
@@ -111,6 +117,7 @@ int main(int argc, char **argv)
 	
 	ros::Subscriber sub = n.subscribe("joy", 1000, subCallback);
 	ros::Subscriber sub2 = n.subscribe("error", 1000, subCallback2);
+	ros::Subscriber sub3 = n.subscribe("huehue", 1000, subCallback3);
 	ros::Publisher read_pub = n.advertise<std_msgs::Empty>("ardrone/takeoff", 1000);
 	ros::Publisher read_pub2 = n.advertise<std_msgs::Empty>("ardrone/land", 1000);
 	ros::Publisher read_pub3 = n.advertise<geometry_msgs::Twist>("cmd_vel", 30);
@@ -124,16 +131,16 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 		ros::spinOnce();
 		seconds = (double)ros::Time::now().toSec();
-        dt = seconds - seconds_prev;
+		dt = seconds - seconds_prev;
 		
 		//send takeoff and land commands
-        if(takeoff> 0.5){
-        	read_pub.publish(myMsg);
-        }
+		if(takeoff> 0.5){
+			read_pub.publish(myMsg);
+		}
 		
-        if(land> 0.5){
-        	read_pub2.publish(myMsg);
-        }
+		if(land> 0.5){
+			read_pub2.publish(myMsg);
+		}
 		if(autonomous_switch>0.5){
 			autonomous = true;
 		}else{
@@ -155,17 +162,16 @@ int main(int argc, char **argv)
 			eyaw_prev = eyaw;
 			
 			ades1 = kp1*ep1 + kd1*ed1 ;  
-            ades2 = kp2*ep2 + kd2*ed2;
-            ades3 = kp3*ep3 + kd3*ed3;
-            ades_yaw = kp_yaw*eyaw + kd_yaw*edyaw;
-            
+			ades2 = kp2*ep2 + kd2*ed2;
+			ades3 = kp3*ep3 + kd3*ed3;
+			ades_yaw = kp_yaw*eyaw + kd_yaw*edyaw;
+
 			seconds_prev = seconds;
 
 
-        }
+		}
 
 
-		
 		if(!autonomous){ 
 			//send xbox commands
 			//ROS_INFO_STREAM("NOPE");
@@ -174,13 +180,14 @@ int main(int argc, char **argv)
 			cmdMsg.linear.z = throttle;
 			cmdMsg.angular.z = yaw;
 			read_pub3.publish(cmdMsg);
+
 		}else{
 			cmdMsg.linear.x = ades1;
-			cmdMsg.linear.y = -ades2;
+			cmdMsg.linear.y = ades2;
 			cmdMsg.linear.z = ades3;
 			cmdMsg.angular.z = ades_yaw;
 			//read_pub3.publish(cmdMsg);
-			//ROS_INFO("pitch: %f roll: %f throttle: %f yaw: %f",ades1,-ades2,ades3,ades_yaw);
+			ROS_INFO("pitch: %f roll: %f throttle: %f yaw: %f",ades1,ades2,ades3,ades_yaw);
 
 			// cmdMsg.linear.x = -ades3;
 			// cmdMsg.linear.y = -ades1;
@@ -189,10 +196,10 @@ int main(int argc, char **argv)
 			//read_pub3.publish(cmdMsg);
 		}
 		
-        loop_rate.sleep();
+		loop_rate.sleep();
 
-    }
+	}
 
 
-    return 0;
+	return 0;
 }

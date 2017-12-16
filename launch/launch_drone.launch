@@ -36,7 +36,7 @@
     <remap from="camera_info"   to="$(arg cam_info_topic)" />
   </node>
 
-  <node name="listener" pkg="drone_application" type="drone_application" output="screen" respawn="true"/>
+  <node name="listener" pkg="drone_application" type="drone_application" output="log" respawn="true"/>
 <!-- <node name="drone_application1" pkg="drone_application" type="drone_application1" output="screen"> 
 </node> -->
  
