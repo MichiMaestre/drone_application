@@ -7,8 +7,6 @@
 
 * Second terminal:
 
-`roslaunch drone_application visual2.launch`
-
-* Third terminal:
-
 `rosrun drone_application listener`
+
+This will publish to Twist messages to topic /error that can be taken by the PID controller.

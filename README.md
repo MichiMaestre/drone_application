@@ -1,16 +1,16 @@
 # Quadrotor project - Going through a window
 
+First connect to the drone wifi, then follow the next steps:
+
 * First terminal:
 
 `roslaunch drone_application launch_drone.launch`
 
+This will start the drone and will open Rviz. Add TF and a camera for visualization with topic ardrone/frontcam/image_raw. If the tags are visible, they will be seen in the visualization.
+It also runs the ar_track_alvar package afor AR tag detection and the PID controller node, which will wait for the listener node (explained below) to run.
 
 * Second terminal:
 
-`roslaunch drone_application visual2.launch`
-
-* Third terminal:
-
 `rosrun drone_application listener`
 
-This will publish to Twist messages to topic /error that can be taken by the PID controller.
+This will broadcast a transform with the window center which will be the goal target for the PID controller.

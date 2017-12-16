@@ -30,15 +30,15 @@ double autonomous_switch = 0.0;
 /*
  * PD controller tuning constants
  */
-double kp1 = 0.08;
-double kp2 = 0.008;
+double kp1 = 0.01;
+double kp2 = 0.01;
 double kp3 = 0.03;
-double kp_yaw = 0.03;
+double kp_yaw = 0.002;
 
-double kd1 = 0.05;
-double kd2 = 0.005;
-double kd3 = 0.005;
-double kd_yaw = 0.01;
+double kd1 = 0.01;
+double kd2 = 0.01;
+double kd3 = 0.001;
+double kd_yaw = 0.001;
 
 double ep1 = 0;
 double ep2 = 0;
@@ -63,14 +63,14 @@ double ades_yaw = 0;
 /*
  * Navigation target, not used as errors are reported at the moment
  */
-double x_target = 2.5;
+double x_target = 1.5;
 double y_target = 0.0;
 double z_target = 0.0;
 
 double seconds = 0;
 double seconds_prev = 0;
 double dt = 0;
-
+int vel_count = 0;
 bool autonomous = false;
 
 
@@ -184,13 +184,15 @@ int main(int argc, char **argv)
 
 
 		}else{
-			cmdMsg.linear.x = pitch;
-			cmdMsg.linear.y = roll;
-			cmdMsg.linear.z = throttle;
-			// cmdMsg.linear.x = ades1;
-			// cmdMsg.linear.y = ades2;
-			// cmdMsg.linear.z = ades3;
-			cmdMsg.angular.z = ades_yaw;
+			// cmdMsg.linear.x = pitch;
+			// cmdMsg.linear.y = roll;
+			// cmdMsg.linear.z = throttle;
+			cmdMsg.linear.x = ades1;
+			//cmdMsg.linear.x = 0.005;
+			cmdMsg.linear.y = -ades2;
+			// cmdMsg.linear.y = 0.05;
+			cmdMsg.linear.z = ades3;
+			cmdMsg.angular.z = -ades_yaw;
 			read_pub3.publish(cmdMsg);
 			ROS_INFO("Apitch: %f roll: %f throttle: %f yaw: %f",ades1,ades2,ades3,ades_yaw);
 
