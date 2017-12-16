@@ -4,6 +4,7 @@
 #include <tf/transform_listener.h>
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Float64.h"
 #include <iostream>
 
 int main(int argc, char** argv){
@@ -18,7 +19,9 @@ int main(int argc, char** argv){
 
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("error", 1000);
   ros::Publisher pub1 = n.advertise<std_msgs::Bool>("detect_flag", 1);
+  ros::Publisher pub2 = n.advertise<std_msgs::Float64>("huehue", 1);
   std_msgs::Bool mymsg;
+  std_msgs::Float64 msg_ab;
 
   int detection = 0;
   double x1 = 0; double x2 = 0; double x3 = 0; double x4 = 0;
@@ -152,6 +155,29 @@ int main(int argc, char** argv){
 
     //std::cout << "  " << std::endl; 
 
+    // MODULE DISTANCE CONDITION
+    double A = (x4*x4) + (y4*y4);
+    //std::cout << "A: " << A << std::endl;
+
+    double B = (x3*x3) + (y3*y3);
+    //std::cout << "B: " << B << std::endl;
+
+    double AB = B - A;
+    //std::cout << "AB: " << AB << std::endl;
+    
+    msg_ab.data = AB;
+    pub2.publish(msg_ab);
+
+    // if (AB <= 0.3 && AB >= -0.3) {
+    //   ROS_INFO_STREAM("Centered");
+    // } else { 
+    //   if (AB > 0.3)
+    //     ROS_INFO_STREAM("Move right");
+    //   if (AB < -0.3)
+    //     ROS_INFO_STREAM("Move left");
+    // }
+
+    //std::cout << "  " << std::endl;
 
         // Broadcaster
     transform_center.setOrigin(tf::Vector3(X, Y, Z));
@@ -165,11 +191,11 @@ int main(int argc, char** argv){
       transform_center = previous_transform;
     }
 
-    std::cout << "Window Center" << std::endl; 
-    std::cout << "X: " << transform_center.getOrigin().x() << std::endl;
-    std::cout << "Y: " << transform_center.getOrigin().y() << std::endl;
-    std::cout << "Z: " << transform_center.getOrigin().z() << std::endl;
-    std::cout << "  " << std::endl; 
+    // std::cout << "Window Center" << std::endl; 
+    // std::cout << "X: " << transform_center.getOrigin().x() << std::endl;
+    // std::cout << "Y: " << transform_center.getOrigin().y() << std::endl;
+    // std::cout << "Z: " << transform_center.getOrigin().z() << std::endl;
+    // std::cout << "  " << std::endl; 
 
 
     // Send transform to visualize
@@ -178,7 +204,7 @@ int main(int argc, char** argv){
     tf::Quaternion q_final = transform_center.getRotation();
     tf::Matrix3x3 m_final(q_final);
     m_final.getRPY(rollf, pitchf, yawf);
-    yawf = (yawf/(3.14159265))*180.0;
+    //yawf = (yawf/(3.14159265))*180.0;
 
     // Publish error between window frame and base link
     error.linear.x = transform_center.getOrigin().x();
@@ -187,12 +213,9 @@ int main(int argc, char** argv){
     error.angular.x = rollf;
     error.angular.y = pitchf;
     error.angular.z = yawf;
+    //ROS_INFO("roll: %f pitch: %f yaw: %f", rollf, pitchf, yawf);
     pub.publish(error);
 
-
-        // THINK WHAT TO DO WHEN A MARKER IS NOT BEING DETECTED
-        // FIRST GET WINDOW SIZE, ANY TIME THE 4 MARKERS GET DETECTED, DETECT AGAIN TO IMPROVE POSE
-        // SAVE FRAME SO THAT WHEN GOING BLIND IT KEEPS GOING TOWARDS THAT POSE
     detection = 0;
 
     ros::spinOnce();
