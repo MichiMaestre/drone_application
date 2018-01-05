@@ -13,7 +13,7 @@ It also runs the ar_track_alvar package afor AR tag detection and the PID contro
 
 `rosrun drone_application listener`
 
-This will broadcast a transform with the window center which will be the goal target for the PID controller.
+This will broadcast a transform with the window center which will be the goal target for the PID controller. There are a large number of PID variables for each direction and hence required a lot of tuning.
 
 
 Successful Demo:
